@@ -55,7 +55,7 @@ public class FixedPointIteration {
     }
 
     public void Create() {
-        
+
         power = 4;
         epsilon = Math.pow(10, -12);
 
@@ -84,25 +84,26 @@ public class FixedPointIteration {
             } catch (IOException e) {
             }
         }
-        */
+         */
         a = new double[4][4];
-        
-            a[0]= new double[]{10.9,1.2,2.1,0.9};
-            a[1]= new double[]{1.2,11.2,1.5,2.5};
-            a[2]= new double[]{2.1,1.5,9.8,1.3};
-            a[3]= new double[]{0.9,2.5,1.3,12.1};
-            
-            b = new double[]{-7,5.3,10.3,24.6};
+
+        a[0] = new double[]{10.9, 1.2, 2.1, 0.9};
+        a[1] = new double[]{1.2, 11.2, 1.5, 2.5};
+        a[2] = new double[]{2.1, 1.5, 9.8, 1.3};
+        a[3] = new double[]{0.9, 2.5, 1.3, 12.1};
+
+        b = new double[]{-7, 5.3, 10.3, 24.6};
     }
 
     public void Calculate() {
         //Создание альфа- и бета-матриц
         for (int i = 0; i < power; i++) {
             double temp = a[i][i];
-            
-            b[i]/= temp;
+
+            b[i] /= temp;
             for (int j = 0; j < power; j++) {
-                a[i][j]/= temp;
+                a[i][j] /= temp;
+                a[i][j] *= -1;
             }
             a[i][i] = 0;
         }
@@ -128,27 +129,48 @@ public class FixedPointIteration {
 
         //Исполнение метода Зейделя
         steps = 0;
-        prevVector = new double[power];
+        double apriorEstimation;
         do {
             prevVector = vector.clone();
             for (int i = 0; i < power; i++) {
-                vector[i] = b[i] + DoubleSum(i);
+                vector[i] = NewVector(i);
+            }
+            if (steps == 0) {
+                System.out.println(ApriorEstimation(true));
             }
             steps++;
-        }while (PosteriorEstimation() > epsilon);
-        
+        } while (PosteriorEstimation() > epsilon);
+
+        //Вывод
         for (int i = 0; i < power; i++) {
             System.out.println(vector[i]);
         }
+        System.out.println(steps);
     }
 
-    public double DoubleSum(int currentString) {
+    public double NewVector(int currentString) {
         double result = 0;
 
         for (int i = 0; i < power; i++) {
-            result = +a[currentString][i] * vector[i];
+            result += a[currentString][i] * vector[i];
         }
-        return result;
+        return result + b[currentString];
+    }
+
+    public double ApriorEstimation(boolean returnSteps) {
+        double norm = 0;
+        for (int i = 0; i < power; i++) {
+            if (norm < Math.abs(vector[i] - prevVector[i])) {
+                norm = Math.abs(vector[i] - prevVector[i]);
+            }
+        }
+
+        double k = Math.log(epsilon / norm * (1 - q)) / Math.log(q);
+        if (returnSteps) {
+            return k;
+        } else {
+            return Math.pow(q, k) / (1 - q) * norm;
+        }
     }
 
     public double PosteriorEstimation() {
